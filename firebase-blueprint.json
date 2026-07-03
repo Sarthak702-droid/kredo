@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "MSMEProfile": {
+      "title": "MSMEProfile",
+      "description": "Information about an MSME business.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "sector": { "type": "string" },
+        "location": { "type": "string" },
+        "establishedYear": { "type": "integer" },
+        "employeeCount": { "type": "integer" },
+        "gstNumber": { "type": "string" },
+        "epfoId": { "type": "string" },
+        "aaConsentId": { "type": "string" }
+      },
+      "required": ["id", "name", "sector", "location", "establishedYear"]
+    },
+    "FinancialMetrics": {
+      "title": "FinancialMetrics",
+      "description": "Detailed historic alternate tax, payment, and balance logs.",
+      "type": "object",
+      "properties": {
+        "msmeId": { "type": "string" },
+        "gstFilings": { "type": "array" },
+        "upiMetrics": { "type": "array" },
+        "bankMetrics": { "type": "array" },
+        "epfoMetrics": { "type": "array" }
+      },
+      "required": ["msmeId"]
+    },
+    "SimulatorVariables": {
+      "title": "SimulatorVariables",
+      "description": "Adjustable risk variables for credit score simulation.",
+      "type": "object",
+      "properties": {
+        "msmeId": { "type": "string" },
+        "gstDelayedFilingsRatio": { "type": "number" },
+        "upiFailureRate": { "type": "number" },
+        "upiMonthlyVolume": { "type": "number" },
+        "bankAvgBalance": { "type": "number" },
+        "bankBounceCount6M": { "type": "number" },
+        "epfoDelayMonths": { "type": "number" },
+        "epfoHeadcountGrowth": { "type": "number" }
+      },
+      "required": ["msmeId"]
+    },
+    "LoanApplication": {
+      "title": "LoanApplication",
+      "description": "Loan application requests, status, timeline and underwriting reports.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "msmeId": { "type": "string" },
+        "msmeName": { "type": "string" },
+        "requestedAmount": { "type": "number" },
+        "purpose": { "type": "string" },
+        "tenureMonths": { "type": "integer" },
+        "status": { "type": "string" },
+        "appliedAt": { "type": "string" },
+        "decidedAt": { "type": "string" },
+        "approvedAmount": { "type": "number" },
+        "interestRate": { "type": "number" },
+        "chatHistory": { "type": "array" },
+        "underwritingReport": { "type": "object" }
+      },
+      "required": ["id", "msmeId", "msmeName", "requestedAmount", "purpose", "tenureMonths", "status", "appliedAt"]
+    }
+  },
+  "firestore": {
+    "/msmes/{msmeId}": {
+      "schema": "MSMEProfile",
+      "description": "MSME entity profiles."
+    },
+    "/metrics/{msmeId}": {
+      "schema": "FinancialMetrics",
+      "description": "Historic tax and banking transaction indicators."
+    },
+    "/simulations/{msmeId}": {
+      "schema": "SimulatorVariables",
+      "description": "Simulation control parameters for alternate credit score modeling."
+    },
+    "/applications/{applicationId}": {
+      "schema": "LoanApplication",
+      "description": "Credit evaluation pipeline and underwriter status records."
+    }
+  }
+}

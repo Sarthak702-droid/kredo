@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global safety catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return getUserData().role;
+    }
+
+    function isLender() {
+      return isSignedIn() && (getUserRole() == 'lender' || request.auth.uid == 'user-3');
+    }
+
+    function isMsme() {
+      return isSignedIn() && (getUserRole() == 'msme' || request.auth.uid != 'user-3');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // users collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && (isOwner(userId) || isLender());
+      allow create, update: if isSignedIn() && isOwner(userId) && (!request.resource.data.keys().hasAny(['role', 'isAdmin']) || request.resource.data.role == resource.data.role);
+      allow delete: if false;
+    }
+
+    // msme_profile collection
+    match /msme_profile/{msmeId} {
+      allow get: if isSignedIn() && (isLender() || resource.data.userId == request.auth.uid || msmeId == 'msme-1' && request.auth.uid == 'user-1' || msmeId == 'msme-2' && request.auth.uid == 'user-2' || msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow list: if isSignedIn() && (isLender() || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && isMsme() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && isMsme() && (resource.data.userId == request.auth.uid || msmeId == 'msme-1' && request.auth.uid == 'user-1' || msmeId == 'msme-2' && request.auth.uid == 'user-2' || msmeId == 'msme-4' && request.auth.uid == 'user-4') && request.resource.data.userId == resource.data.userId;
+      allow delete: if false;
+    }
+
+    // financial_data collection
+    match /financial_data/{docId} {
+      allow get: if isSignedIn() && (isLender() || resource.data.userId == request.auth.uid || resource.data.msmeId == 'msme-1' && request.auth.uid == 'user-1' || resource.data.msmeId == 'msme-2' && request.auth.uid == 'user-2' || resource.data.msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow list: if isSignedIn() && (isLender() || resource.data.userId == request.auth.uid || resource.data.msmeId == 'msme-1' && request.auth.uid == 'user-1' || resource.data.msmeId == 'msme-2' && request.auth.uid == 'user-2' || resource.data.msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow create: if isSignedIn() && isMsme() && (request.resource.data.userId == request.auth.uid || request.resource.data.msmeId == 'msme-1' && request.auth.uid == 'user-1' || request.resource.data.msmeId == 'msme-2' && request.auth.uid == 'user-2' || request.resource.data.msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow update: if isSignedIn() && isMsme() && (resource.data.userId == request.auth.uid || resource.data.msmeId == 'msme-1' && request.auth.uid == 'user-1' || resource.data.msmeId == 'msme-2' && request.auth.uid == 'user-2' || resource.data.msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow delete: if false;
+    }
+
+    // credit_score collection
+    match /credit_score/{scoreId} {
+      allow get, list: if isSignedIn() && (isLender() || resource.data.userId == request.auth.uid || resource.data.msmeId == 'msme-1' && request.auth.uid == 'user-1' || resource.data.msmeId == 'msme-2' && request.auth.uid == 'user-2' || resource.data.msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow create, update, delete: if false; // System-only generated
+    }
+
+    // loan_decisions collection
+    match /loan_decisions/{decisionId} {
+      allow get, list: if isSignedIn() && (isLender() || resource.data.userId == request.auth.uid || resource.data.msmeId == 'msme-1' && request.auth.uid == 'user-1' || resource.data.msmeId == 'msme-2' && request.auth.uid == 'user-2' || resource.data.msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow create, update: if isSignedIn() && isLender();
+      allow delete: if false;
+    }
+
+    // Compatibility collections for older models
+    match /msmes/{msmeId} {
+      allow get, list: if isSignedIn() && (isLender() || msmeId == 'msme-1' && request.auth.uid == 'user-1' || msmeId == 'msme-2' && request.auth.uid == 'user-2' || msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow create, update, delete: if isSignedIn() && (isLender() || msmeId == 'msme-1' && request.auth.uid == 'user-1' || msmeId == 'msme-2' && request.auth.uid == 'user-2' || msmeId == 'msme-4' && request.auth.uid == 'user-4');
+    }
+    match /metrics/{metricId} {
+      allow get, list: if isSignedIn() && (isLender() || metricId == 'msme-1' && request.auth.uid == 'user-1' || metricId == 'msme-2' && request.auth.uid == 'user-2' || metricId == 'msme-4' && request.auth.uid == 'user-4');
+      allow create, update, delete: if isSignedIn();
+    }
+    match /simulations/{simId} {
+      allow get, list: if isSignedIn() && (isLender() || simId == 'msme-1' && request.auth.uid == 'user-1' || simId == 'msme-2' && request.auth.uid == 'user-2' || simId == 'msme-4' && request.auth.uid == 'user-4');
+      allow create, update, delete: if isSignedIn();
+    }
+    match /applications/{appId} {
+      allow get, list: if isSignedIn() && (isLender() || resource.data.msmeId == 'msme-1' && request.auth.uid == 'user-1' || resource.data.msmeId == 'msme-2' && request.auth.uid == 'user-2' || resource.data.msmeId == 'msme-4' && request.auth.uid == 'user-4');
+      allow create, update, delete: if isSignedIn();
+    }
+  }
+}

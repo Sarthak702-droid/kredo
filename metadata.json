@@ -1,0 +1,6 @@
+{
+  "name": "Kredo",
+  "description": "AI-powered MSME Credit Intelligence Platform that replaces traditional collateral with real-time Financial Health Cards powered by GST, UPI, Account Aggregator, and EPFO Credit Analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
