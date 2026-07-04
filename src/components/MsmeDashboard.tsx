@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { exportMsmeHealthCardToPDF } from '../lib/pdfExporter';
+import { apiFetch } from '../lib/api';
 import { DocumentAuditLog } from './DocumentAuditLog';
+import { NtcComparisonPanel } from './NtcComparisonPanel';
+import { ScoreExplainability } from './ScoreExplainability';
 import {
   MSMEProfile,
   FinancialMetrics,
@@ -156,7 +159,7 @@ I can help you understand your risk flags and give you specific steps to lower y
     }
 
     try {
-      const res = await fetch(`/api/msmes/${profile.id}/bulk-sync`, {
+      const res = await apiFetch(`/api/msmes/${profile.id}/bulk-sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -195,7 +198,7 @@ I can help you understand your risk flags and give you specific steps to lower y
         message: h.message
       }));
 
-      const res = await fetch('/api/msme-ai-advisor', {
+      const res = await apiFetch('/api/msme-ai-advisor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -656,6 +659,14 @@ I can help you understand your risk flags and give you specific steps to lower y
                   {getGradeExplanation(scoreDetails.riskGrade)}
                 </p>
               </div>
+
+              {isMicroMerchant && <NtcComparisonPanel scoreDetails={scoreDetails} />}
+
+              <ScoreExplainability
+                profile={profile}
+                scoreDetails={scoreDetails}
+                variables={variables}
+              />
             </div>
           </div>
 

@@ -29,7 +29,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Read Firebase Project config
 const CONFIG_FILE = path.join(process.cwd(), 'firebase-applet-config.json');
@@ -405,7 +405,9 @@ async function seedDatabaseIfEmpty() {
   }
 }
 
-seedDatabaseIfEmpty();
+seedDatabaseIfEmpty().catch((error: any) => {
+  console.warn('Firestore pre-seed unhandled error — continuing with local database:', error?.message || error);
+});
 
 // Deterministic Underwriting Report Generator when Gemini Key is absent
 function generateDeterministicUnderwritingReport(

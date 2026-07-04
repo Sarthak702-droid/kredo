@@ -39,7 +39,9 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex flex-wrap items-center gap-3">
           {/* MSME Profile Switcher */}
           <div className="flex items-center space-x-2 bg-stitch-dark p-1.5 rounded-xl border border-stitch-border">
-            <span className="text-xs text-zinc-400 font-mono pl-2">Active Business:</span>
+            <span className="text-xs text-zinc-400 font-mono pl-2">
+              {role === 'LENDER' ? 'Review Business:' : 'Active Business:'}
+            </span>
             <select
               id="active-business-select"
               value={selectedMsmeId}
@@ -94,6 +96,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto mt-3 flex flex-wrap gap-2">
+        {['RBI AA Framework', 'OCEN 1.2', 'ULI Compatible'].map((badge) => (
+          <span
+            key={badge}
+            className="text-[9px] font-mono text-zinc-500 border border-stitch-border/60 px-2 py-0.5 rounded-full"
+          >
+            {badge}
+          </span>
+        ))}
       </div>
     </header>
   );

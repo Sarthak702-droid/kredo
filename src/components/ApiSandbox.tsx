@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Terminal, Send, Copy, Check, FileJson, Cpu } from 'lucide-react';
 
 export const ApiSandbox: React.FC = () => {
-  const [selectedEndpoint, setSelectedEndpoint] = useState<'GET_MSMES' | 'GET_MSME_DETAIL' | 'POST_SIMULATE' | 'GET_APPLICATIONS'>('GET_MSMES');
+  const [selectedEndpoint, setSelectedEndpoint] = useState<'GET_MSMES' | 'GET_MSME_DETAIL' | 'POST_SIMULATE' | 'GET_APPLICATIONS' | 'GET_ULI_INQUIRY'>('GET_MSMES');
   const [reqBody, setReqBody] = useState<string>('{}');
   const [responsePayload, setResponsePayload] = useState<string>('// Trigger an API call below to inspect live ledger logs...');
   const [isQuerying, setIsQuerying] = useState<boolean>(false);
@@ -14,6 +14,7 @@ export const ApiSandbox: React.FC = () => {
       case 'GET_MSME_DETAIL': return 'GET /api/msmes/msme-1';
       case 'POST_SIMULATE': return 'POST /api/msmes/msme-1/simulate';
       case 'GET_APPLICATIONS': return 'GET /api/applications';
+      case 'GET_ULI_INQUIRY': return 'GET /api/msmes/msme-2 (ULI Health Card Inquiry)';
     }
   };
 
@@ -23,6 +24,7 @@ export const ApiSandbox: React.FC = () => {
       case 'GET_MSME_DETAIL': return 'Fetches a detailed credit report of a single MSME (e.g., msme-1) including raw historical GSTR-1 filings, UPI merchant streams, AA bank ledger balances, and EPFO payroll records.';
       case 'POST_SIMULATE': return 'Dynamically simulates risk parameters (such as check bounces, UPI failure rates, late GST filings) and returns the recalculated Kredo Score, risk grade, and credit caps.';
       case 'GET_APPLICATIONS': return 'Retrieves the complete credit underwriting funnel applications pool, listing requested limits, decision states, and clarification chats.';
+      case 'GET_ULI_INQUIRY': return 'ULI-compatible loan inquiry endpoint — returns the MSME Financial Health Card for an NTC micro-merchant (Srinivasa Kirana, msme-2).';
     }
   };
 
@@ -73,6 +75,10 @@ export const ApiSandbox: React.FC = () => {
         break;
       case 'GET_APPLICATIONS':
         path = '/api/applications';
+        method = 'GET';
+        break;
+      case 'GET_ULI_INQUIRY':
+        path = '/api/msmes/msme-2';
         method = 'GET';
         break;
     }
@@ -184,6 +190,22 @@ export const ApiSandbox: React.FC = () => {
                 <span className="text-[9px] text-gray-500 font-normal">Credit Funnels</span>
               </div>
               <p className="text-[10px] text-gray-400 line-clamp-1">Lists current underwriting files and decision trees.</p>
+            </button>
+
+            {/* ULI Health Card Inquiry */}
+            <button
+              onClick={() => loadDefaultBody('GET_ULI_INQUIRY')}
+              className={`w-full p-3 rounded-2xl border text-left flex flex-col space-y-1.5 transition-all ${
+                selectedEndpoint === 'GET_ULI_INQUIRY'
+                  ? 'bg-indigo-950/25 border-indigo-500/80 text-white'
+                  : 'bg-gray-950/60 border-gray-800/80 hover:bg-gray-900/40 text-gray-300'
+              }`}
+            >
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="font-bold text-indigo-400">ULI Health Card Inquiry</span>
+                <span className="text-[9px] text-gray-500 font-normal">NTC MSME</span>
+              </div>
+              <p className="text-[10px] text-gray-400 line-clamp-1">ULI-compatible loan inquiry for credit-invisible micro-merchant.</p>
             </button>
           </div>
         </div>

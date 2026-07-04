@@ -4,7 +4,12 @@ import { Navbar } from './components/Navbar';
 import { MsmeDashboard } from './components/MsmeDashboard';
 import { LenderDashboard } from './components/LenderDashboard';
 import { ApiSandbox } from './components/ApiSandbox';
-import { ShieldCheck, Info, RefreshCw, Layers } from 'lucide-react';
+import { DemoBanner } from './components/DemoBanner';
+import { DemoGuide } from './components/DemoGuide';
+import { ImpactMetricsStrip } from './components/ImpactMetricsStrip';
+import { DEMO_STEPS } from './demo/demoSteps';
+import { apiFetch } from './lib/api';
+import { Info, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [msmes, setMsmes] = useState<MSMEProfile[]>([]);
@@ -13,6 +18,12 @@ export default function App() {
   const [role, setRole] = useState<'MSME' | 'LENDER' | 'DEVELOPER'>('MSME');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [networkError, setNetworkError] = useState<string | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => sessionStorage.getItem('kredo-banner-dismissed') === '1'
+  );
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoStepIndex, setDemoStepIndex] = useState(0);
+  const [highlightAppId, setHighlightAppId] = useState<string | null>(null);
 
   // 1. Initial Data Fetching from full-stack Express API
   const fetchAllData = async (shouldSilence = false) => {
@@ -21,8 +32,8 @@ export default function App() {
     try {
       // Fetch both MSMEs and current credit applications in parallel
       const [msmesRes, appsRes] = await Promise.all([
-        fetch('/api/msmes'),
-        fetch('/api/applications')
+        apiFetch('/api/msmes'),
+        apiFetch('/api/applications')
       ]);
 
       if (!msmesRes.ok || !appsRes.ok) {
@@ -51,10 +62,59 @@ export default function App() {
     fetchAllData();
   }, []);
 
+  useEffect(() => {
+    if (!demoMode) return;
+
+    const step = DEMO_STEPS[demoStepIndex];
+    if (!step) return;
+
+    if (step.msmeId) setSelectedMsmeId(step.msmeId);
+    if (step.role) setRole(step.role);
+    setHighlightAppId(step.highlightAppId ?? null);
+
+    if (step.scrollToId) {
+      const scrollTarget = step.scrollToId;
+      setTimeout(() => {
+        document.getElementById(scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [demoMode, demoStepIndex]);
+
+  const handleStartDemo = () => {
+    setDemoMode(true);
+    setDemoStepIndex(0);
+    setBannerDismissed(true);
+    sessionStorage.setItem('kredo-banner-dismissed', '1');
+  };
+
+  const handleExploreFreely = () => {
+    setBannerDismissed(true);
+    sessionStorage.setItem('kredo-banner-dismissed', '1');
+  };
+
+  const handleDemoNext = () => {
+    if (demoStepIndex + 1 >= DEMO_STEPS.length) {
+      setDemoMode(false);
+      setHighlightAppId(null);
+      return;
+    }
+    setDemoStepIndex((i) => i + 1);
+  };
+
+  const handleDemoSkip = () => {
+    setDemoMode(false);
+    setHighlightAppId(null);
+  };
+
+  const handleDemoExit = () => {
+    setDemoMode(false);
+    setHighlightAppId(null);
+  };
+
   // 2. Simulator variables updater (emits state update to backend)
   const handleUpdateSimVariables = async (updatedVars: SimulatorVariables) => {
     try {
-      const res = await fetch(`/api/msmes/${selectedMsmeId}/simulate`, {
+      const res = await apiFetch(`/api/msmes/${selectedMsmeId}/simulate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedVars)
@@ -73,7 +133,7 @@ export default function App() {
   // 3. New Loan Application submitter
   const handleSubmitLoan = async (loanData: { requestedAmount: number; purpose: string; tenureMonths: number }) => {
     try {
-      const res = await fetch('/api/applications', {
+      const res = await apiFetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +159,7 @@ export default function App() {
     data: { approvedAmount: number; interestRate: number; comments: string }
   ) => {
     try {
-      const res = await fetch(`/api/applications/${appId}/decide`, {
+      const res = await apiFetch(`/api/applications/${appId}/decide`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,7 +180,7 @@ export default function App() {
   // 5. Ask for borrower clarification
   const handleAskClarification = async (appId: string, lenderQuestion: string) => {
     try {
-      const res = await fetch(`/api/applications/${appId}/clarify`, {
+      const res = await apiFetch(`/api/applications/${appId}/clarify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lenderQuestion })
@@ -138,7 +198,7 @@ export default function App() {
   // 6. Post chat messages (MSME or Lender)
   const handleSendChatMessage = async (appId: string, message: string) => {
     try {
-      const res = await fetch(`/api/applications/${appId}/chat`, {
+      const res = await apiFetch(`/api/applications/${appId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,7 +219,7 @@ export default function App() {
   // 7. Generate Gemini AI Credit Report (calls Node.js backend)
   const handleGenerateAiReport = async (appId: string) => {
     try {
-      const res = await fetch(`/api/applications/${appId}/analyze-gemini`, {
+      const res = await apiFetch(`/api/applications/${appId}/analyze-gemini`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -188,6 +248,10 @@ export default function App() {
         role={role}
         onChangeRole={(newRole) => setRole(newRole)}
       />
+
+      {!bannerDismissed && !demoMode && (
+        <DemoBanner onStartDemo={handleStartDemo} onExploreFreely={handleExploreFreely} />
+      )}
 
       {/* 2. Loading state, error state, or main content */}
       <main className="flex-grow">
@@ -248,6 +312,8 @@ export default function App() {
               <LenderDashboard
                 applications={applications}
                 msmes={msmes}
+                selectedMsmeId={selectedMsmeId}
+                highlightAppId={highlightAppId}
                 onApproveReject={handleApproveReject}
                 onAskClarification={handleAskClarification}
                 onSendChatMessage={handleSendChatMessage}
@@ -261,6 +327,19 @@ export default function App() {
           </>
         )}
       </main>
+
+      {!isLoading && !networkError && <ImpactMetricsStrip />}
+
+      {demoMode && (
+        <DemoGuide
+          step={DEMO_STEPS[demoStepIndex]}
+          stepIndex={demoStepIndex}
+          totalSteps={DEMO_STEPS.length}
+          onNext={handleDemoNext}
+          onSkip={handleDemoSkip}
+          onExit={handleDemoExit}
+        />
+      )}
 
       {/* 3. Footer */}
       <footer className="bg-stitch-dark border-t border-stitch-border py-6 px-6 text-center text-xs text-zinc-500 font-sans">

@@ -35,15 +35,27 @@ try {
   console.error('Error initializing Firebase Admin SDK:', error);
 }
 
-// 3. Initialize Firestore instance
+// 3. Initialize Firestore instance (Admin SDK requires Application Default Credentials)
+function canUseFirebaseAdmin() {
+  if (process.env.KREDO_LOCAL_DB_ONLY === 'true') return false;
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) return true;
+  if (process.env.K_SERVICE) return true;
+  if (process.env.GAE_ENV) return true;
+  if (process.env.FUNCTION_TARGET) return true;
+  return false;
+}
+
 let firestore;
-if (adminApp) {
+if (adminApp && canUseFirebaseAdmin()) {
   try {
     firestore = getFirestore(adminApp, databaseId);
     console.log(`Firestore connected to database: ${databaseId}`);
   } catch (error) {
     console.error('Error getting Firestore instance:', error);
+    firestore = null;
   }
+} else {
+  console.log('Firebase Admin Firestore disabled — using local db.json fallback (no Google ADC).');
 }
 
 // 4. Secure Authentication & Role-Based Access Control Middleware

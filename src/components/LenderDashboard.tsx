@@ -13,6 +13,7 @@ import {
   ZAxis
 } from 'recharts';
 import { exportReportToPDF } from '../lib/pdfExporter';
+import { apiFetch } from '../lib/api';
 import {
   LoanApplication,
   MSMEProfile,
@@ -50,6 +51,8 @@ import {
 interface LenderDashboardProps {
   applications: LoanApplication[];
   msmes: MSMEProfile[];
+  selectedMsmeId?: string;
+  highlightAppId?: string | null;
   onApproveReject: (id: string, status: 'APPROVED' | 'REJECTED', data: { approvedAmount: number; interestRate: number; comments: string }) => Promise<any>;
   onAskClarification: (id: string, question: string) => Promise<any>;
   onSendChatMessage: (id: string, message: string) => Promise<any>;
@@ -59,6 +62,8 @@ interface LenderDashboardProps {
 export const LenderDashboard: React.FC<LenderDashboardProps> = ({
   applications,
   msmes,
+  selectedMsmeId,
+  highlightAppId,
   onApproveReject,
   onAskClarification,
   onSendChatMessage,
@@ -71,10 +76,26 @@ export const LenderDashboard: React.FC<LenderDashboardProps> = ({
   const [activeView, setActiveView] = useState<'APPLICATIONS' | 'PORTFOLIO_RISK'>('APPLICATIONS');
 
   useEffect(() => {
+    if (highlightAppId) {
+      setSelectedAppId(highlightAppId);
+      setActiveView('APPLICATIONS');
+    }
+  }, [highlightAppId]);
+
+  useEffect(() => {
+    if (highlightAppId || !selectedMsmeId) return;
+    const matchingApp = applications.find((app) => app.msmeId === selectedMsmeId);
+    if (matchingApp) {
+      setSelectedAppId(matchingApp.id);
+      setActiveView('APPLICATIONS');
+    }
+  }, [selectedMsmeId, applications, highlightAppId]);
+
+  useEffect(() => {
     let isMounted = true;
     const fetchRiskDensity = async () => {
       try {
-        const res = await fetch('/api/reports/portfolio-risk-density');
+        const res = await apiFetch('/api/reports/portfolio-risk-density');
         if (res.ok) {
           const data = await res.json();
           if (isMounted) {
@@ -589,7 +610,14 @@ export const LenderDashboard: React.FC<LenderDashboardProps> = ({
       </div>
 
       {/* RIGHT PANEL: Underwriting Intelligence Desk (col-span-8) */}
-      <div className="lg:col-span-8 flex flex-col space-y-6">
+      <div
+        id="lender-app-detail"
+        className={`lg:col-span-8 flex flex-col space-y-6 ${
+          highlightAppId && highlightAppId === selectedAppId
+            ? 'ring-2 ring-stitch-green ring-offset-2 ring-offset-stitch-dark rounded-3xl'
+            : ''
+        }`}
+      >
         {activeApp && activeMsme && activeVars && activeScoreDetails ? (
           <>
             {/* Quick Summary Banner */}
