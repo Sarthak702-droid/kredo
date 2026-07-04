@@ -2,8 +2,8 @@
 
 **AI-powered alternate data credit intelligence for New-to-Credit (NTC) and New-to-Bank (NTB) MSMEs.**
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen?style=for-the-badge)](https://kredo.onrender.com)
-[![Track 03](https://img.shields.io/badge/IDBI_Innovate_2026-Track_03-blue?style=for-the-badge)](https://github.com/Sarthak702-droid/kredo)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen?style=for-the-badge)](https://kredo-rkbf.onrender.com/)
+[![Track 03](https://img.shields.io/badge/IDBI_Innovate_2026-Track_03-blue?style=for-the-badge)](https://hack2skill.com/event/idbinnovate?utm_source=hack2skill&utm_medium=homepage&sectionid=6a25b66b3b5d9099664c1ce2)
 
 > **Submission for IDBI Innovate 2026 — Track 03:** Financial Inclusion · Digital Lending · Credit Decisioning
 
@@ -23,7 +23,7 @@ Indian MSMEs — especially NTC/NTB businesses like kirana stores — lack audit
 
 ## Live Demo (3 minutes)
 
-1. Open the [live demo](https://kredo.onrender.com)
+1. Open the [live demo](https://kredo-rkbf.onrender.com)
 2. Click **Start 3-Min Demo**
 3. Follow the guided path: NTC kirana store → Health Card → scoring breakdown → lender approval
 4. Or explore freely: switch between **MSME Portal**, **Underwriter View**, and **API Sandbox**
